@@ -38,6 +38,7 @@ def generate_summary_chain():
         template="""
             Given the context: "{context}"
             and the specific interest in the search query: "{search_query}" related to the ticker symbol "{ticker}",
+            the search query is just for reference dont directly check that, understand the query, any related items to the search query should also be considered,
             You are writing this for report, so be good at summarizing, dont say they have firect relation and all
             summarize the key points and implications in multiple paragraphs, focusing on:
             1. The overall impact of the search query topic on the company represented by the ticker.
