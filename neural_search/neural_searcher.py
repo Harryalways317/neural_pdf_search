@@ -3,7 +3,7 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.http.models.models import Filter, SearchParams
-
+from fuzzywuzzy import process
 from config import QDRANT_URL, QDRANT_API_KEY, EMBEDDINGS_MODEL
 
 
@@ -24,8 +24,16 @@ class NeuralSearcher:
             limit=100
         )
         print(f"Search took {time.time() - start_time} seconds")
-        if ticker is None:
-            return [hit.metadata for hit in hits]
+        if ticker is not None:
+            filtered_hits = []
+            for hit in hits:
+                tickers = hit.metadata.get('tickers', [])
+                # Using fuzzywuzzy to find the best match and its score
+                best_match, score = process.extractOne(ticker, tickers)
+                # 80% threshold for accepting a match
+                if score >= 80: 
+                    filtered_hits.append(hit.metadata)
+            return filtered_hits
         else:
             return [hit.metadata for hit in hits]
 
