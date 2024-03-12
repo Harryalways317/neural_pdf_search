@@ -31,3 +31,25 @@ def generate_chain():
     chain = prompt | llm | parser
 
     return chain
+
+def generate_summary_chain():
+    # Define the new prompt template for summarization
+    prompt_template = PromptTemplate(
+        template="""
+            Given the context: "{context}"
+            and the specific interest in the search query: "{search_query}" related to the ticker symbol "{ticker}",
+            You are writing this for report, so be good at summarizing, dont say they have firect relation and all
+            summarize the key points and implications in multiple paragraphs, focusing on:
+            1. The overall impact of the search query topic on the company represented by the ticker.
+            2. Key financial aspects related to the search query and ticker.
+            3. Future outlook and strategic moves in response to the search query topic.
+            4. Potential risks and opportunities for investors.
+
+            Ensure the summary is comprehensive and provides valuable insights for stakeholders.
+            """,
+        input_variables=["context", "search_query", "ticker"],
+    )
+
+    chain = prompt_template | llm
+
+    return chain

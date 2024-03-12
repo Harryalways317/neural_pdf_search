@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from config import COLLECTION_NAME, STATIC_DIR
-from neural_search.llm_chain import generate_chain
+from neural_search.llm_chain import generate_chain, generate_summary_chain
 from neural_search.neural_searcher import NeuralSearcher
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +32,18 @@ app.add_middleware(
 
 neural_searcher = NeuralSearcher(collection_name=COLLECTION_NAME)
 chain = generate_chain()
+summary_chain = generate_summary_chain()
+
+
+def get_summary(contexts, search_query, ticker):
+    for context in contexts:
+        context.pop('tickers', None)
+        print('context', context)
+    print(contexts[0])
+    res = summary_chain.invoke({'context':contexts,'search_query':search_query,'ticker':ticker})
+    print(f'summary {res}')
+    return res
+
 
 
 @app.get("/api/search")
@@ -48,8 +60,11 @@ async def read_item(ticker: str,keyword:str, neural: bool = True):
     keywords.insert(0,keyword)
     search_term = ','.join(keywords)
     print(search_term)
+    search_result = neural_searcher.search(text=search_term,ticker = ticker)
+    summary = get_summary(search_result,search_term,ticker)
     return {
-        "result": neural_searcher.search(text=search_term,ticker = ticker),
+        'summary':summary,
+        "search_result": search_result,
         'keywords': res
     }
 
