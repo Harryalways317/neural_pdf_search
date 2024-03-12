@@ -12,11 +12,16 @@ from neural_search.neural_searcher import NeuralSearcher
 from fastapi.middleware.cors import CORSMiddleware
 
 
+from diskcache import Cache
+
+# Cache directory
+cache_dir = "../cache"
+cache = Cache(cache_dir)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-
     yield
     # Clean up the ML models and release the resources
 
@@ -36,6 +41,13 @@ summary_chain = generate_summary_chain()
 
 
 def get_summary(contexts, search_query, ticker):
+    cache_key = f"summary-{ticker}-{search_query}"
+
+    # Result from the cache
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        print("Returning cached result")
+        return cached_result
     for context in contexts:
         context.pop('tickers', None)
         print('context', context)
@@ -44,16 +56,21 @@ def get_summary(contexts, search_query, ticker):
     print(f'summary {res}')
     print(type(res))
     if type(res) == dict:
+        cache.set(cache_key, res.get('content',''))
         return res.get('content','')
     else:
         res = json.loads(res)
+        cache.set(cache_key, res.get('content', ''))
         return res.get('content','')
 
+def get_similar_keywords(keyword):
+    cache_key = f"keywords-{keyword}"
 
-
-@app.get("/api/search")
-async def read_item(ticker: str,keyword:str, neural: bool = True):
-    print('invoking chain')
+    # Result from the cache
+    cached_keywords = cache.get(cache_key)
+    if cached_keywords:
+        print("Returning cached keywords")
+        return cached_keywords
     res = chain.invoke({"keyword": keyword})
     print(res)
     if res and type(res) == dict:
@@ -62,21 +79,27 @@ async def read_item(ticker: str,keyword:str, neural: bool = True):
         res = json.loads(res)
         keywords = res["keywords"]
     print(keywords)
-    keywords.insert(0,keyword)
+    keywords.insert(0, keyword)
+    cache.set(cache_key, keywords)
+    return keywords
+
+
+
+@app.get("/api/search")
+async def read_item(ticker: str,keyword:str, neural: bool = True):
+    print('invoking chain')
+
+    keywords = get_similar_keywords(keyword)
+    print(f'keywords {keywords}')
     search_term = ','.join(keywords)
-    print(search_term)
+    print(f'search_term {search_term}')
     search_result = neural_searcher.search(text=search_term,ticker = ticker)
     summary = get_summary(search_result,search_term,ticker)
     return {
         'summary':summary,
         "search_result": search_result,
-        'keywords': res
+        'keywords': keywords
     }
-
-#
-# # Mount the static files directory once the search endpoint is defined
-# if os.path.exists(STATIC_DIR):
-#     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True))
 
 if __name__ == "__main__":
     import uvicorn
