@@ -30,3 +30,4 @@ ENV QDRANT_HOST=qdrant
 CMD python init_collection.py
 
 #&& uvicorn main:app --host 0.0.0.0 --port 8000
+CMD python neural_search/service.py
