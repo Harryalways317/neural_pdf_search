@@ -85,7 +85,7 @@ def preprocess():
     pdf_dir = '../data/pdfs'
     pdf_files = glob.glob(os.path.join(pdf_dir, '*.pdf'))
     print(f'total of length {len(pdf_files)}')
-    chunks_cache_path = 'chunks_cache.joblib'
+    chunks_cache_path = '../neural_search/chunks_cache.joblib'
     model_cache_path = 'model_cache.joblib'
 
     all_chunks = []
