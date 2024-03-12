@@ -42,7 +42,12 @@ def get_summary(contexts, search_query, ticker):
     print(contexts[0])
     res = summary_chain.invoke({'context':contexts,'search_query':search_query,'ticker':ticker})
     print(f'summary {res}')
-    return res
+    print(type(res))
+    if type(res) == dict:
+        return res.get('content','')
+    else:
+        res = json.loads(res)
+        return res.get('content','')
 
 
 

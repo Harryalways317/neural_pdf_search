@@ -5,11 +5,16 @@ from langchain_openai import AzureChatOpenAI
 from neural_search.models.keyword_model import Keywords
 
 from dotenv import load_dotenv
+
+from neural_search.models.summary_model import Summary
+
 load_dotenv()
 
 llm = AzureChatOpenAI(model="gpt-4", deployment_name="hom-gpt-4")
 
 parser = JsonOutputParser(pydantic_object=Keywords)
+
+summary_parser = JsonOutputParser(pydantic_object=Summary)
 
 
 def generate_chain():
@@ -45,12 +50,15 @@ def generate_summary_chain():
             2. Key financial aspects related to the search query and ticker.
             3. Future outlook and strategic moves in response to the search query topic.
             4. Potential risks and opportunities for investors.
+            
+            {format_instructions}
 
             Ensure the summary is comprehensive and provides valuable insights for stakeholders.
             """,
         input_variables=["context", "search_query", "ticker"],
+        partial_variables={"format_instructions": summary_parser.get_format_instructions()},
     )
 
-    chain = prompt_template | llm
+    chain = prompt_template | llm | summary_parser
 
     return chain
