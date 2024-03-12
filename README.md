@@ -45,6 +45,9 @@ then the retrived contexts are sent to llm for summary generation
 
 
 ## Sample Output
+
+Time took = 1 m 48.18 s
+
 ```json
 {
     "summary": {
